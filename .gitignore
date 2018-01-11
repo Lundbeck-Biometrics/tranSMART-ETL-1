@@ -4,3 +4,8 @@ dea
 **/*.iml
 .idea
 .project
+snp.out
+snp.err
+snp.finish
+snp.start
+

@@ -1,0 +1,62 @@
+###########################################################################
+ # tranSMART - translational medicine data mart
+ # 
+ # Copyright 2008-2012 Janssen Research & Development, LLC.
+ # 
+ # This product includes software developed at Janssen Research & Development, LLC.
+ # 
+ # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License 
+ # as published by the Free Software  * Foundation, either version 3 of the License, or (at your option) any later version, along with the following terms:
+ # 1.	You may convey a work based on this program in accordance with section 5, provided that you retain the above notices.
+ # 2.	You may convey verbatim copies of this program code as you receive it, in any medium, provided that you retain the above notices.
+ # 
+ # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS    * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ # 
+ # You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ # 
+ #
+ ##########################################################################
+
+
+# *************************************************************************************
+# parameter for loading Entrez data 
+#
+# Entrez data can be downloaded from: 
+#    ftp://ftp.ncbi.nih.gov/gene/DATA/gene_info.gz
+# *************************************************************************************
+
+# selected organism(s) in the format "NCBI's Taxonomy ID:Organism's Scientific Name",
+# here's "Organism's Scientific Name" need to be in upper case. 
+# each organism is separated by ";", and extra space is not allowed around ":" or ";" 
+selected_organism=9606:HOMO SAPIENS;10090:MUS MUSCULUS;10116:RATTUS NORVEGICUS
+//selected_organism=9606:HOMO SAPIENS
+
+# point to the downloaded Entrez data file
+gene_info_source=/data/ETL/dictionaries/Data/Entrez/gene_info
+
+# staging table for storing selected Entrez data
+gene_info_table=gene_info_test
+
+# staging table for storing synonyms for selected genes 
+gene_synonym_table=gene_synonym_test
+
+# flag to determine if the table <gene_info_table> should be created
+create_gene_info_table=yes
+
+# flag to determine if the table <gene_synonym_table> should be created
+create_gene_synonym_table=yes
+
+#skip_load_gene_info=no
+
+
+# *******************************************************
+# parameter for loading Taxonomy data
+#
+# Taxonomy data can be downloaded from:
+#    ftp://ftp.ncbi.nih.gov/pub/taxonomy/
+# *******************************************************
+taxonomy_source=C:/Data/Taxonomy/names.dmp
+taxonomy_name_table=taxonomy_name_test
+
+skip_taxonomy_name=no
+
