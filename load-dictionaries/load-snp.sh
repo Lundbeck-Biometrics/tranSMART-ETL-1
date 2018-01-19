@@ -5,7 +5,7 @@
 touch snp.start
 
 java -cp \
-    /datastore/tranSMART-ETL/target/loader-jar-with-dependencies.jar \
+    /datastore/tranSMART-ETL-dictionaries/target/loader-jar-with-dependencies.jar \
     org.transmartproject.pipeline.vcf/VCF \
     > snp.out 2> snp.err
 
