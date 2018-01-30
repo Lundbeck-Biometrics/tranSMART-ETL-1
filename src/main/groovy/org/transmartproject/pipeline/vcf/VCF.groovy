@@ -63,34 +63,61 @@ class VCF {
 		Sql tm_lz = Util.createSqlFromPropertyFile(props, "tm_lz")
 		Sql searchapp = Util.createSqlFromPropertyFile(props, "searchapp")
 
-                searchKeyword = new SearchKeyword()
-                searchKeyword.setSearchapp(searchapp)
+		searchKeyword = new SearchKeyword()
+		searchKeyword.setSearchapp(searchapp)
 
-                searchKeywordTerm = new SearchKeywordTerm()
-                searchKeywordTerm.setSearchapp(searchapp)
+		searchKeywordTerm = new SearchKeywordTerm()
+		searchKeywordTerm.setSearchapp(searchapp)
 
 		VCF vcf = new VCF()
 		vcf.setGenePairDelimiter(props.get("gene_pair_delimiter"))
 		vcf.setGeneSymbolDelimiter(props.get("gene_symbol_delimiter"))
 		vcf.setBatchSize(Integer.parseInt(props.get("batch_size")))
-                vcf.processVCFData(props)
+
+		// Read VCF file and create two output files: .tsv and .gene
+		// can be skipped by setting the property skip_process_vcf_data to yes
+		vcf.processVCFData(props)
+
+		// Create a table in tm_lz with the genome version in the name (tm_lz.vcf19)
 		vcf.createVCFTable(tm_lz, props)
+		// Load data from .tsv file into the table created in tm_lz (tm_lz.vcf19)
 		vcf.loadVCFData(tm_lz, props)
+		// Create index for the new table (tm_lz.vcf19)
 		vcf.createVCFIndex(tm_lz, props)
 
+		// Create another table in tm_lz with the genome version in the name and _gene (tm_lz.vcf19_gene)
 		vcf.createVCFGeneTable(tm_lz, props)
+		// Load data from .gene file into the _gene table in tm_lz (tm_lz.vcf19_gene)
 		vcf.loadVCFGene(tm_lz, props)
+		// Create index for the new table (tm_lz.vcf19_gene)
 		vcf.createVCFGeneIndex(tm_lz, props)
 
-		vcf.loadDeSnpInfo(deapp, tm_lz,props)
-		vcf.loadDeSnpGeneMap(deapp, tm_lz, props)
-		vcf.loadDeRcSnpInfo(deapp, tm_lz, props)
-		vcf.loadSearchKeyword(searchapp, deapp, props)
-                searchKeyword.closeSearchKeyword()
-                searchKeywordTerm.closeSearchKeywordTerm()
+		// Copy all rs_id, chrom, pos from tm_lz.vcf19 to deapp.de_snp_info
+		// Note: it will not insert if the combination of rs_id, chrom, pos already exists
+		// When we do the insert, we will also get a snp_info_id for each row (based on a trigger on the table
+		// that gets the next unique id). This snp_info_id is then used in the load in deapp.de_rc_snp_info
+		// and searchapp.search_keyword that follow.
+		vcf.loadDeSnpInfo(deapp, tm_lz, props)
 
-                print new Date()
-                println" VCF SNPs load completed successfully"
+		// Nothing happens here for Postgres
+		// So actually the creation of the .gene file and the _gene table is not needed for Postgres
+		// and we could safely set skip_create_vcf_gene_table=yes and skip_create_vcf_gene_index=yes
+		vcf.loadDeSnpGeneMap(deapp, tm_lz, props)
+
+		// Copy from tm_lz.vcf19 to deapp.de_rc_snp_info
+		// Note: it will not insert if the combination of snp_info_id, hgversion, and rs_id already exists
+		vcf.loadDeRcSnpInfo(deapp, tm_lz, props)
+
+		// Copy rs_id and snp_info_id from deapp.de_snp_info into searchapp.search_keyword and then
+		// the rs_id and a unique searchkeyword id (generated when inserting into search_keyword)
+		// into searchapp.search_keyword_term
+		vcf.loadSearchKeyword(searchapp, deapp, props)
+
+		searchKeyword.closeSearchKeyword()
+		searchKeywordTerm.closeSearchKeywordTerm()
+
+		print new Date()
+		println" VCF SNPs load completed successfully"
 	}
 
 
@@ -133,6 +160,7 @@ class VCF {
                             rowResult = deapp.firstRow(qry2, [snpInfoId, it.hgversion, it.rs_id])
                             int count = rowResult[0]
                             if(count > 0){
+								// the info below is a bit misleading. it is snp_info_id, hgversion, and rs_id that we check for.
                                 log.info "${it.rs_id}:${it.chrom}:${it.pos} already exists in DE_RC_SNP_INFO ..."
                             }
                             else{
