@@ -297,6 +297,8 @@ class VCF {
             Boolean isPostgres = Util.isPostgres()
             String qry;
             String qrysyn;
+			String hgVersion = props.get("human_genome_version")
+			String dbSNPVersion = props.get("dbSNP_version")
 
             if(props.get("skip_search_keyword").toString().toLowerCase().equals("yes")){
                 log.info("Skip loading SNP RS# from DE_SNP_INFO to SEARCH_KEYWORD ...")
@@ -319,7 +321,7 @@ class VCF {
                 {
                     long snpInfoId = it.snp_info_id
                     searchKeyword.insertSearchKeyword(it.name, snpInfoId,
-                                                              'SNP:'+it.name,
+                                                              'SNP:'+hgVersion+':'+dbSNPVersion+':'+it.name,
                                                               'SNP', 'SNP', 'SNP')
                     long searchKeywordID = searchKeyword.getSearchKeywordId(it.name, 'SNP')
                     if(searchKeywordID){
