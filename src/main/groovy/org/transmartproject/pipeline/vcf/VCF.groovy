@@ -145,12 +145,12 @@ class VCF {
 			   """
                     qry4 = "select snp_info_id from de_snp_info where name = ? and hg_version = $hgVersion and dbsnp_version = $dbSNPVersion"
                 } else {
-                    qry1 = "select rs_id,chrom, pos, ref, alt, gene_info, variation_class, $hgVersion AS hgversion from tm_lz.$vcfTable "
-                    qry2 = "select count(*) from deapp.de_rc_snp_info where snp_info_id = ? and hg_version = ? and rs_id = ?"
-                    qry3 = """ insert into DE_RC_SNP_INFO (snp_info_id, rs_id, chrom, pos, ref, alt, gene_info, gene_name, entrez_id, variation_class, hg_version)
-                                                         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    qry1 = "select rs_id,chrom, pos, ref, alt, gene_info, variation_class from tm_lz.$vcfTable "
+                    qry2 = "select count(*) from deapp.de_rc_snp_info where snp_info_id = ? and rs_id = ? and hg_version = $hgVersion and dbsnp_version = $dbSNPVersion"
+                    qry3 = """ insert into DE_RC_SNP_INFO (snp_info_id, rs_id, chrom, pos, ref, alt, gene_info, gene_name, entrez_id, variation_class, hg_version, dbsnp_version)
+                                                         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, $hgVersion, $dbSNPVersion)
 						 """
-                    qry4 = "select snp_info_id from de_snp_info where name = ?"
+                    qry4 = "select snp_info_id from de_snp_info where name = ? and hg_version = $hgVersion and dbsnp_version = $dbSNPVersion"
 		}
 
                 //deapp.withTransaction {
@@ -266,8 +266,8 @@ class VCF {
                     qry3 = "insert into DE_SNP_INFO (name, chrom, chrom_pos, hg_version, dbsnp_version) values (?, ?, ?, $hgVersion, $dbSNPVersion)"
                 } else {
                     qry1 = "select rs_id, chrom, pos from tm_lz.$vcfTable"
-                    qry2 = "select count(*) from de_snp_info where name=? and chrom=? and chrom_pos=?"
-                    qry3 = "insert into DE_SNP_INFO (name, chrom, chrom_pos) values (?, ?, ?)"
+                    qry2 = "select count(*) from de_snp_info where name=? and chrom=? and chrom_pos=? and hg_version=$hgVersion and dbsnp_version=$dbSNPVersion"
+                    qry3 = "insert into DE_SNP_INFO (name, chrom, chrom_pos, hg_version, dbsnp_version) values (?, ?, ?, $hgVersion, $dbSNPVersion)"
                 }
                 
                 //deapp.withTransaction {
