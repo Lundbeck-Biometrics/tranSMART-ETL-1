@@ -128,8 +128,9 @@ class VCF {
             String qry2;
             String qry3;
             String qry4;
-            String vcfTable = "vcf" + props.get("human_genome_version")
-            String hgVersion = props.get("human_genome_version")
+			String hgVersion = props.get("human_genome_version")
+			String dbSNPVersion = props.get("dbSNP_version")
+            String vcfTable = "vcf" + hgVersion
 
             if(props.get("skip_de_rc_snp_info").toString().toLowerCase().equals("yes")){
                 log.info("Skip loading VCF's SNP RS# from table $vcfTable into DE_RC_SNP_INFO ...")
@@ -137,12 +138,12 @@ class VCF {
                 log.info("Start loading VCF's SNP RS# from $vcfTable into DE_RC_SNP_INFO ...")
 
                 if (isPostgres) {
-                    qry1 = "select rs_id,chrom, pos, ref, alt, gene_info, variation_class, $hgVersion AS hgversion from tm_lz.$vcfTable "
-                    qry2 = "select count(*) from deapp.de_rc_snp_info where snp_info_id = ? and hg_version = ? and rs_id = ?"
-                    qry3 = """ insert into DE_RC_SNP_INFO (snp_info_id, rs_id, chrom, pos, ref, alt, gene_info, gene_name, entrez_id, variation_class, hg_version)
-                                                         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    qry1 = "select rs_id,chrom, pos, ref, alt, gene_info, variation_class from tm_lz.$vcfTable "
+                    qry2 = "select count(*) from deapp.de_rc_snp_info where snp_info_id = ? and rs_id = ? and hg_version = $hgVersion and dbsnp_version = $dbSNPVersion"
+                    qry3 = """ insert into DE_RC_SNP_INFO (snp_info_id, rs_id, chrom, pos, ref, alt, gene_info, gene_name, entrez_id, variation_class, hg_version, dbsnp_version)
+                                                         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, $hgVersion, $dbSNPVersion)
 			   """
-                    qry4 = "select snp_info_id from de_snp_info where name = ?"
+                    qry4 = "select snp_info_id from de_snp_info where name = ? and hg_version = $hgVersion and dbsnp_version = $dbSNPVersion"
                 } else {
                     qry1 = "select rs_id,chrom, pos, ref, alt, gene_info, variation_class, $hgVersion AS hgversion from tm_lz.$vcfTable "
                     qry2 = "select count(*) from deapp.de_rc_snp_info where snp_info_id = ? and hg_version = ? and rs_id = ?"
@@ -157,24 +158,23 @@ class VCF {
                         tmlz.eachRow(qry1) {
                             GroovyRowResult rowResult = deapp.firstRow(qry4, [it.rs_id])
                             int snpInfoId = rowResult[0]
-                            rowResult = deapp.firstRow(qry2, [snpInfoId, it.hgversion, it.rs_id])
+                            rowResult = deapp.firstRow(qry2, [snpInfoId, it.rs_id])
                             int count = rowResult[0]
                             if(count > 0){
-								// the info below is a bit misleading. it is snp_info_id, hgversion, and rs_id that we check for.
-                                log.info "${it.rs_id}:${it.chrom}:${it.pos} already exists in DE_RC_SNP_INFO ..."
+                                log.info "${snpInfoId}:${it.rs_id}:${hgVersion}:${dbSNPVersion} already exists in DE_RC_SNP_INFO ..."
                             }
                             else{
                                 if(it.gene_info == null || it.gene_info.indexOf(":") < 0) {
                                     log.info "Insert ${it.rs_id}:${it.chrom}:${it.pos} ${snpInfoId} '' into DE_RC_SNP_INFO ..."
                                     ps.addBatch([snpInfoId, it.rs_id, it.chrom, it.pos, it.ref, it.alt,
-                                                 it.gene_info, null, null, it.variation_class, it.hgversion])
+                                                 it.gene_info, null, null, it.variation_class])
                                 } else {
                                     String[] genes = it.gene_info.split(/(:|\|)/)
                                     String geneName = genes[0]
                                     long geneId = genes[1].toInteger()
                                     log.info "Insert ${it.rs_id}:${it.chrom}:${it.pos} ${snpInfoId} ${geneName}:${geneId} into DE_RC_SNP_INFO ..."
                                     ps.addBatch([snpInfoId, it.rs_id, it.chrom, it.pos, it.ref, it.alt,
-                                                 it.gene_info, geneName, geneId, it.variation_class, it.hgversion])
+                                                 it.gene_info, geneName, geneId, it.variation_class])
                                 }
                             }
                         }
@@ -250,7 +250,10 @@ class VCF {
             String qry1;
             String qry2;
             String qry3;
-            String vcfTable = "vcf" + props.get("human_genome_version")
+			String hgVersion = props.get("human_genome_version")
+			String dbSNPVersion = props.get("dbSNP_version")
+            String vcfTable = "vcf" + hgVersion
+
 
             if(props.get("skip_de_snp_info").toString().toLowerCase().equals("yes")){
                 log.info("Skip loading VCF's SNP RS# from table $vcfTable into DE_SNP_INFO ...")
@@ -259,8 +262,8 @@ class VCF {
 
                 if(isPostgres) {
                     qry1 = "select rs_id, chrom, pos from tm_lz.$vcfTable"
-                    qry2 = "select count(*) from de_snp_info where name=? and chrom=? and chrom_pos=?"
-                    qry3 = "insert into DE_SNP_INFO (name, chrom, chrom_pos) values (?, ?, ?)"
+                    qry2 = "select count(*) from de_snp_info where name=? and chrom=? and chrom_pos=? and hg_version=$hgVersion and dbsnp_version=$dbSNPVersion"
+                    qry3 = "insert into DE_SNP_INFO (name, chrom, chrom_pos, hg_version, dbsnp_version) values (?, ?, ?, $hgVersion, $dbSNPVersion)"
                 } else {
                     qry1 = "select rs_id, chrom, pos from tm_lz.$vcfTable"
                     qry2 = "select count(*) from de_snp_info where name=? and chrom=? and chrom_pos=?"
@@ -273,10 +276,10 @@ class VCF {
                             GroovyRowResult rowResult = deapp.firstRow(qry2, [it.rs_id, it.chrom, it.pos])
                             int count = rowResult[0]
                             if(count > 0){
-                                log.info "${it.rs_id}:${it.chrom}:${it.pos} already exists in DE_SNP_INFO ..."
+                                log.info "${it.rs_id}:${it.chrom}:${it.pos}:${hgVersion}:${dbSNPVersion} already exists in DE_SNP_INFO ..."
                             }
                             else{
-                                log.info "Insert ${it.rs_id}:${it.chrom}:${it.pos} into DE_SNP_INFO ..."
+                                log.info "Insert ${it.rs_id}:${it.chrom}:${it.pos}:${hgVersion}:${dbSNPVersion} into DE_SNP_INFO ..."
                                 ps.addBatch([it.rs_id, it.chrom, it.pos])
                             }
                         }
@@ -333,8 +336,6 @@ class VCF {
 
 		int index = 0
 		String vcfTable = "vcf" + props.get("human_genome_version")
-		String hgVersion = props.get("human_genome_version")
-		String dbSNPVersion = props.get("dbSNP_version")
 
 		File vcfData = new File(props.get("vcf_source_file") + ".tsv")
 
@@ -465,6 +466,7 @@ class VCF {
 	}
 
 
+	// not used anymore
 	void readVCFData(File vcfInput, File output, File geneOutput, Properties props){
 
 		String [] str, info
@@ -788,7 +790,6 @@ class VCF {
             Boolean isPostgres = Util.isPostgres()
             String qry;
             String qry1;
-            String qry2;
             String vcfTable = "vcf" + props.get("human_genome_version")
             String [] ids = props.get("info_id_list").split(";")
             String str = ""
