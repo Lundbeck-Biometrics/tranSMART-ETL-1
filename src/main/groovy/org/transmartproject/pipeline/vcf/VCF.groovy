@@ -531,7 +531,7 @@ class VCF {
 		int lineNum = 0
 		if(vcfInput.size() > 0){
 			vcfInput.eachLine {
-				if((it.indexOf("##") == -1) && (it.indexOf("chr") == 0)){
+				if((it.indexOf("##") == -1) && (it.indexOf("#") == -1)){
 					lineNum++
 
 					sb = readLine(it, infoIdList)
