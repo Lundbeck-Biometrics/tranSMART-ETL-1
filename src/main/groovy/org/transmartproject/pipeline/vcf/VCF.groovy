@@ -138,7 +138,7 @@ class VCF {
 
                 if (isPostgres) {
                     qry1 = "select rs_id,chrom, pos, ref, alt, gene_info, variation_class, $hgVersion AS hgversion from tm_lz.$vcfTable "
-                    qry2 = "select count(*) from deapp.de_rc_snp_info where snp_info_id = ? and hg_version = ? and rs_id = ?"
+                    //qry2 = "select count(*) from deapp.de_rc_snp_info where snp_info_id = ? and hg_version = ? and rs_id = ?"
                     qry3 = """ insert into DE_RC_SNP_INFO (snp_info_id, rs_id, chrom, pos, ref, alt, gene_info, gene_name, entrez_id, variation_class, hg_version)
                                                          values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			   """
@@ -157,13 +157,13 @@ class VCF {
                         tmlz.eachRow(qry1) {
                             GroovyRowResult rowResult = deapp.firstRow(qry4, [it.rs_id])
                             int snpInfoId = rowResult[0]
-                            rowResult = deapp.firstRow(qry2, [snpInfoId, it.hgversion, it.rs_id])
-                            int count = rowResult[0]
-                            if(count > 0){
+                            //rowResult = deapp.firstRow(qry2, [snpInfoId, it.hgversion, it.rs_id])
+                            //int count = rowResult[0]
+                            //if(count > 0){
 								// the info below is a bit misleading. it is snp_info_id, hgversion, and rs_id that we check for.
-                                log.info "${it.rs_id}:${it.chrom}:${it.pos} already exists in DE_RC_SNP_INFO ..."
-                            }
-                            else{
+                            //    log.info "${it.rs_id}:${it.chrom}:${it.pos} already exists in DE_RC_SNP_INFO ..."
+                            //}
+                            //else{
                                 if(it.gene_info == null || it.gene_info.indexOf(":") < 0) {
                                     log.info "Insert ${it.rs_id}:${it.chrom}:${it.pos} ${snpInfoId} '' into DE_RC_SNP_INFO ..."
                                     ps.addBatch([snpInfoId, it.rs_id, it.chrom, it.pos, it.ref, it.alt,
@@ -176,7 +176,7 @@ class VCF {
                                     ps.addBatch([snpInfoId, it.rs_id, it.chrom, it.pos, it.ref, it.alt,
                                                  it.gene_info, geneName, geneId, it.variation_class, it.hgversion])
                                 }
-                            }
+                           // }
                         }
                     })
                 //}
@@ -259,7 +259,7 @@ class VCF {
 
                 if(isPostgres) {
                     qry1 = "select rs_id, chrom, pos from tm_lz.$vcfTable"
-                    qry2 = "select count(*) from de_snp_info where name=? and chrom=? and chrom_pos=?"
+                    //qry2 = "select count(*) from de_snp_info where name=? and chrom=? and chrom_pos=?"
                     qry3 = "insert into DE_SNP_INFO (name, chrom, chrom_pos) values (?, ?, ?)"
                 } else {
                     qry1 = "select rs_id, chrom, pos from tm_lz.$vcfTable"
@@ -270,15 +270,15 @@ class VCF {
                 //deapp.withTransaction {
                     deapp.withBatch(batchSize,qry3, { ps ->
                         tmlz.eachRow(qry1) {
-                            GroovyRowResult rowResult = deapp.firstRow(qry2, [it.rs_id, it.chrom, it.pos])
-                            int count = rowResult[0]
-                            if(count > 0){
-                                log.info "${it.rs_id}:${it.chrom}:${it.pos} already exists in DE_SNP_INFO ..."
-                            }
-                            else{
+                            //GroovyRowResult rowResult = deapp.firstRow(qry2, [it.rs_id, it.chrom, it.pos])
+                            //int count = rowResult[0]
+                            //if(count > 0){
+                            //    log.info "${it.rs_id}:${it.chrom}:${it.pos} already exists in DE_SNP_INFO ..."
+                            //}
+                            //else{
                                 log.info "Insert ${it.rs_id}:${it.chrom}:${it.pos} into DE_SNP_INFO ..."
                                 ps.addBatch([it.rs_id, it.chrom, it.pos])
-                            }
+                            //}
                         }
 
                     })
